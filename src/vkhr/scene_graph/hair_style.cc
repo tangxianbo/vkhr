@@ -393,15 +393,27 @@ namespace vkhr {
 
         std::vector<std::size_t> strand_offset(get_strand_count());
 
-        if (has_segments()) {
-            std::copy(segments.begin(), segments.end(), strand_offset.begin() + 1);
-            std::transform(strand_offset.begin(), strand_offset.end(),
-                           strand_offset.begin(), [](std::size_t i) { return i + 1; });
-            strand_offset[0] = 0;
-            std::partial_sum(strand_offset.begin(),
-                             strand_offset.end(),
-                             strand_offset.begin());
-        } else {
+		if (has_segments()) {
+			/*
+			std::copy(segments.begin(), segments.end(), strand_offset.begin());
+			std::transform(strand_offset.begin(), strand_offset.end(),
+				strand_offset.begin(), [](std::size_t i) { return i + 1; });
+			strand_offset[0] = 0;
+			std::partial_sum(strand_offset.begin(),
+				strand_offset.end(),
+				strand_offset.begin());
+			*/
+			
+			int pre_vertex_count = segments[0] + 1;
+			strand_offset[0] = 0;
+			for (int i = 1; i < segments.size(); ++i)
+			{
+				strand_offset[i] = pre_vertex_count;
+				pre_vertex_count += segments[i] + 1;
+			}
+		}
+		else
+		{
             auto vertices_per_segment = get_default_segment_count() + 1;
             std::fill(strand_offset.begin() + 1, strand_offset.end(), vertices_per_segment);
             strand_offset[0] = 0;
