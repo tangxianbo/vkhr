@@ -1,6 +1,7 @@
 #include <vkhr/scene_graph/model.hh>
 
 #include <iostream>
+#include "vkhr/image.hh"
 
 namespace vkhr {
     Model::Model(const std::string& file_path) {
@@ -49,6 +50,11 @@ namespace vkhr {
             }
         }
 
+#ifdef USE_MODEL_TEXTURE
+		auto imagePath = file_path.substr(0, file_path.find_last_of(".")) + ".png";
+		image = Image{imagePath};
+#endif	
+
         success = true;
         return success;
     }
@@ -76,4 +82,10 @@ namespace vkhr {
     const std::vector<std::uint32_t>& Model::get_elements() const {
         return elements;
     }
+
+#ifdef USE_MODEL_TEXTURE
+	vkhr::Image Model::get_image() const {
+		return image;
+	}
+#endif
 }

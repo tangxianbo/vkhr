@@ -36,10 +36,29 @@ namespace vkhr {
             vk::DebugMarker::object_name(vulkan_renderer.device, elements.get_device_memory(), VK_OBJECT_TYPE_DEVICE_MEMORY,
                                          "Model Index Device Memory", id);
 
+			// load texture
+#ifdef USE_MODEL_TEXTURE
+			model_image = vk::DeviceImage{
+				vulkan_renderer.device,
+				vulkan_renderer.command_pool,
+				wavefront_model.get_image()
+			};
+
+			model_view = vk::ImageView{
+				vulkan_renderer.device,
+				model_image
+			};
+
+			model_sampler = vk::Sampler{ vulkan_renderer.device };
+#endif
+
             ++id;
         }
 
         void Model::draw(Pipeline& pipeline, vk::DescriptorSet& descriptor_set, vk::CommandBuffer& command_buffer) {
+#ifdef USE_MODEL_TEXTURE
+			descriptor_set.write(15, model_view, model_sampler);
+#endif
             command_buffer.bind_descriptor_set(descriptor_set, pipeline);
             command_buffer.bind_vertex_buffer(0, vertices);
             command_buffer.bind_index_buffer(elements, 0);
@@ -78,15 +97,26 @@ namespace vkhr {
                 { 0, 0, sizeof(std::uint32_t) } // light size
             };
 
+#ifdef USE_MODEL_TEXTURE
+			pipeline.shader_stages.emplace_back(vulkan_renderer.device, SHADER("models/modelTextured.vert"));
+			vk::DebugMarker::object_name(vulkan_renderer.device, pipeline.shader_stages[0], VK_OBJECT_TYPE_SHADER_MODULE, "Model Vertex Shader");
+			pipeline.shader_stages.emplace_back(vulkan_renderer.device, SHADER("models/modelTextured.frag"), constants, &constant_data, sizeof(constant_data));
+			vk::DebugMarker::object_name(vulkan_renderer.device, pipeline.shader_stages[1], VK_OBJECT_TYPE_SHADER_MODULE, "Model Fragment Shader");
+#else
             pipeline.shader_stages.emplace_back(vulkan_renderer.device, SHADER("models/model.vert"));
             vk::DebugMarker::object_name(vulkan_renderer.device, pipeline.shader_stages[0], VK_OBJECT_TYPE_SHADER_MODULE, "Model Vertex Shader");
             pipeline.shader_stages.emplace_back(vulkan_renderer.device, SHADER("models/model.frag"), constants, &constant_data, sizeof(constant_data));
             vk::DebugMarker::object_name(vulkan_renderer.device, pipeline.shader_stages[1], VK_OBJECT_TYPE_SHADER_MODULE, "Model Fragment Shader");
+#endif
 
             std::vector<vk::DescriptorSet::Binding> descriptor_bindings {
                 { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
                 { 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER },
                 { 4, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER }
+
+#ifdef USE_MODEL_TEXTURE
+				,{ 15, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER }
+#endif
             };
 
             for (std::uint32_t i { 0 }; i < light_count; ++i)
@@ -103,10 +133,12 @@ namespace vkhr {
                                                                                 pipeline.descriptor_set_layout,
                                                                                 "Model Descriptor Set");
 
-            for (std::size_t i { 0 }; i < pipeline.descriptor_sets.size(); ++i) {
+            for (std::size_t i { 0 }; i < pipeline.descriptor_sets.size(); ++i) 
+			{
                 pipeline.descriptor_sets[i].write(0, vulkan_renderer.camera[i]);
                 pipeline.descriptor_sets[i].write(1, vulkan_renderer.lights[i]);
                 pipeline.descriptor_sets[i].write(4, vulkan_renderer.params[i]);
+
                 for (std::uint32_t j { 0 }; j < light_count; ++j)
                     pipeline.descriptor_sets[i].write(9 + j, vulkan_renderer.shadow_maps[j].get_image_view(),
                                                              vulkan_renderer.shadow_maps[j].get_sampler());
@@ -161,6 +193,12 @@ namespace vkhr {
 
             pipeline.descriptor_set_layout = vk::DescriptorSet::Layout {
                 vulkan_renderer.device
+#ifdef USE_MODEL_TEXTURE
+				,
+				{
+					{ 15, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER }
+				}
+#endif
             };
 
             vk::DebugMarker::object_name(vulkan_renderer.device, pipeline.descriptor_set_layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Model Depth Descriptor Set Layout");

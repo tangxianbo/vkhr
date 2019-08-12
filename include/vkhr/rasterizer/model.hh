@@ -40,6 +40,12 @@ namespace vkhr {
             vk::IndexBuffer  elements;
             vk::VertexBuffer vertices;
 
+#ifdef USE_MODEL_TEXTURE
+			vk::ImageView model_view;
+			vk::DeviceImage model_image;
+			vk::Sampler model_sampler;
+#endif
+
             static int id;
         };
     }

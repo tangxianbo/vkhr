@@ -6,6 +6,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <vector>
+#include "vkhr/image.hh"
 
 namespace vkhr {
     class Model final {
@@ -30,6 +31,10 @@ namespace vkhr {
         const std::vector<Vertex>& get_vertices() const;
         const std::vector<std::uint32_t>& get_elements() const;
 
+#ifdef USE_MODEL_TEXTURE
+		vkhr::Image get_image() const;
+#endif
+
     private:
         bool success { false };
         tinyobj::attrib_t attributes;
@@ -37,6 +42,10 @@ namespace vkhr {
         std::vector<tinyobj::material_t> materials;
         std::vector<std::uint32_t> elements;
         std::vector<Vertex> vertices;
+
+#ifdef USE_MODEL_TEXTURE
+		Image image;
+#endif
     };
 }
 

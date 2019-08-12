@@ -7,12 +7,13 @@
     },
 
     "lights": [
-        {
-            "direction": [ 1, 2, 1 ],
+		
+		{
+			"direction": [ -1, 2, 1 ],
             "intensity": [ 0.430,
                            0.380,
                            0.280 ]
-        }
+		}
     ],
 
     "root": 0,
@@ -30,6 +31,10 @@
             },
 
             "name": "Lara Croft",
+			
+			"models": [
+                "../models/ponytail/ponytail.obj"
+            ],
 
             "styles": [
                 "../styles/ponytail.hair"
